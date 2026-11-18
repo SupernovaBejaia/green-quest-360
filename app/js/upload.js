@@ -69,15 +69,30 @@ async function uploadOne(c, withSources) {
   let done = 0;
   const step = async () => { done++; c.progress = Math.round((done / total) * 100); await saveCapture(c); emit(c); };
 
-  for (const f of files) {
-    if (c.uploaded[f.name]) { await step(); continue; }
+  const sendFile = async (f) => {
+    if (c.uploaded[f.name]) { await step(); return; }
     const blob = await getBlob(f.key);
-    if (!blob) { await step(); continue; }
+    if (!blob) { await step(); return; }
     const r = await call({ key: CONFIG.uploadKey, action: 'file', folder, subfolder: f.dir || '', name: f.name, mime: f.mime, data: await blobToBase64(blob) });
     c.uploaded[f.name] = r.url || true;
     if (f.main) { c.remote = { panoUrl: r.url, folderUrl: r.folderUrl }; }
     await step();
-  }
+  };
+  // La photo 360 puis la première source passent seules (elles créent les dossiers côté Drive),
+  // le reste part 3 par 3 : Google met ~5 s par fichier, l'envoi va donc 3 fois plus vite.
+  await sendFile(files[0]);
+  if (files[1]) await sendFile(files[1]);
+  const rest = files.slice(2);
+  let failure = null;
+  // Au premier échec, les autres envois s'arrêtent après leur fichier en cours :
+  // la reprise ne démarre qu'une fois tout le monde arrêté (sinon : doublons).
+  const worker = async () => {
+    while (rest.length && !failure) {
+      try { await sendFile(rest.shift()); } catch (e) { failure = failure || e; }
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  if (failure) throw failure;
   if (!c.uploaded['meta.json']) {
     const r = await call({ key: CONFIG.uploadKey, action: 'file', folder, subfolder: '', name: 'meta.json', mime: 'application/json', data: btoa(unescape(encodeURIComponent(metaJson(c)))) });
     c.uploaded['meta.json'] = r.url || true;
