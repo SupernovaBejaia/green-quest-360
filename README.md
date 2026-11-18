@@ -12,6 +12,11 @@ Web app installable (Android + iPhone) pour prendre des **photos 360 hors ligne*
 - **Interface** en français et en arabe.
 - **Atelier HD** (`hd.html`) : refait une version 8192 px sur ordinateur à partir des photos sources.
 
+**App en ligne** : <https://supernovabejaia.github.io/green-quest-360/>.
+**Atelier HD** : <https://supernovabejaia.github.io/green-quest-360/hd.html>.
+**Photos reçues** : dossier Drive « Green Quest Cartographie ».
+**Republier après une modification** : `bash tools/publish.sh "message"`. Change d'abord `VERSION` dans `app/sw.js`.
+
 | Dossier | Contenu |
 |---|---|
 | `app/` | l'application à héberger (fichiers statiques, HTTPS) |

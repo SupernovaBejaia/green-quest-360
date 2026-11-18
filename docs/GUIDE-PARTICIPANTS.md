@@ -1,5 +1,7 @@
 # Green Quest 360 — Guide participant
 
+**Lien de l'app / رابط التطبيق : https://supernovabejaia.github.io/green-quest-360/**
+
 ## Installer (une fois, avec Internet)
 - **Android (Chrome)** : ouvre le lien, puis « Installer l'application » (ou menu ⋮, puis *Ajouter à l'écran d'accueil*).
 - **iPhone (Safari)** : ouvre le lien, puis le bouton **Partager**, puis **Sur l'écran d'accueil**.
