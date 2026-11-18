@@ -105,8 +105,8 @@ async function screenHome() {
   for (const c of caps) {
     const el = document.createElement('button');
     el.className = 'item'; el.dataset.id = c.id;
-    el.innerHTML = `<img alt=""><div class="item-body"><div class="item-title">${esc(t(c.meta.category))}${c.meta.place ? ' — ' + esc(c.meta.place) : ''}</div>
-      <div class="muted small">${fmtDate(c.createdAt)}</div><div class="status st-${c.status}">${statusText(c)}</div></div>`;
+    el.innerHTML = `<img alt=""><div class="item-body"><div class="item-title">${t('photo360')} · ${fmtDate(c.createdAt)}</div>
+      <div class="status st-${c.status}">${statusText(c)}</div></div>`;
     el.onclick = () => screenDetail(c.id);
     list.appendChild(el);
     getBlob(`${c.id}/thumb`).then((b) => { if (b) el.querySelector('img').src = URL.createObjectURL(b); });
@@ -140,28 +140,29 @@ function screenNew() {
   cleanupViewer();
   app.innerHTML = `
     <div class="page">
-      <header class="top"><button class="icon" id="back">‹</button><div class="title">${t('newPhoto')}</div><span></span></header>
-      <h2>${t('chooseType')}</h2>
-      <div class="cats">${CONFIG.categories.map((k, i) => `<label class="cat"><input type="radio" name="cat" value="${k}" ${i === 0 ? 'checked' : ''}><span class="cat-ic cat-${k}"></span><span>${t(k)}</span></label>`).join('')}</div>
-      <label class="field"><span>${t('place')}</span><input id="place" placeholder="${esc(t('placeHint'))}"></label>
-      <details class="tips" open><summary>${t('howTo')}</summary>
-        <div class="howto-img" aria-hidden="true">${pivotSvg()}</div>
-        <ol><li>${t('tip1')}</li><li>${t('tip2')}</li><li>${t('tip3')}</li><li>${t('tip4')}</li></ol>
-      </details>
-      <button class="btn primary big" id="start">${t('start')}</button>
+      <header class="top"><button class="icon" id="back">‹</button><div class="title">${t('tipsTitle')}</div><span></span></header>
+      <p class="muted">${t('tipsIntro')}</p>
+      <div class="tip-list">
+        ${TIPS.map((k, i) => `<div class="tip"><div class="tip-ic">${TIP_ICONS[i]}</div><div><div class="tip-t">${t(k + '_t')}</div><div class="tip-d">${t(k + '_d')}</div>
+          ${i === 0 ? `<div class="howto-img" aria-hidden="true">${pivotSvg()}</div>` : ''}</div></div>`).join('')}
+      </div>
+      <button class="btn primary big sticky" id="start">${t('start')}</button>
     </div>`;
   $('#back').onclick = screenHome;
   $('#start').onclick = () => {
     // Doit être déclenché directement par le geste (exigence iOS)
     const perm = SIM ? Promise.resolve('granted') : requestMotionPermission();
     startGps();
-    const meta = { category: app.querySelector('input[name=cat]:checked').value, place: $('#place').value.trim() };
+    const meta = {};
     perm.then((p) => {
       if (p !== 'granted') { toast(t('permDenied'), 6000); return; }
       screenCapture(meta);
     });
   };
 }
+
+const TIPS = ['tipPivot', 'tipUpright', 'tipDistance', 'tipAim', 'tipStill', 'tipLight', 'tipSpot', 'tipWait'];
+const TIP_ICONS = ['🔄', '📱', '📏', '🎯', '🚶', '☀️', '📍', '⏳'];
 
 function pivotSvg() {
   return `<svg viewBox="0 0 220 110" width="220" height="110">
@@ -207,7 +208,7 @@ async function processCapture(id, meta, res) {
   const fixP = currentFix();
   const capture = {
     id, createdAt: Date.now(), status: 'stitching',
-    meta: { ...meta, participant: p.name || '', team: p.team || '', note: '' },
+    meta: { ...meta, participant: p.name || '', team: p.team || '' },
     shots: res.shots.map((s) => ({ R: s.R, w: s.w, h: s.h, target: s.target, t: s.t })),
     sim: res.sim,
   };
@@ -248,7 +249,7 @@ async function restitch(id) {
   const shots = [];
   for (let i = 0; i < c.shots.length; i++) shots.push({ ...c.shots[i], blob: await getBlob(`${id}/shot_${i}`) });
   await deleteCapture(id);
-  processCapture(id, { category: c.meta.category, place: c.meta.place }, { shots, sim: c.sim });
+  processCapture(id, {}, { shots, sim: c.sim });
 }
 
 function screenReview(c, canvas) {
@@ -260,7 +261,6 @@ function screenReview(c, canvas) {
       <div class="viewer"><canvas id="pv"></canvas><span class="badge360">360°</span></div>
       ${partial ? `<p class="warn">${t('partial')}</p>` : ''}
       <p class="muted small">${c.location ? `📍 ${c.location.lat.toFixed(5)}, ${c.location.lon.toFixed(5)} (±${c.location.accuracy} m)` : t('noLocation')}</p>
-      <label class="field"><span>${t('note')}</span><textarea id="note" rows="2" placeholder="${esc(t('notePh'))}"></textarea></label>
       <div class="row gap">
         <button class="btn ghost" id="redo">${t('redo')}</button>
         <button class="btn primary grow" id="save">${t('save')}</button>
@@ -269,7 +269,6 @@ function screenReview(c, canvas) {
   try { viewer = new PanoViewer($('#pv')); viewer.setImage(canvas); } catch (e) { console.warn(e); }
   $('#redo').onclick = async () => { await deleteCapture(c.id); screenNew(); };
   $('#save').onclick = async () => {
-    c.meta.note = $('#note').value.trim();
     c.status = 'ready';
     await saveCapture(c);
     toast(t('saved'), 4000);
@@ -286,13 +285,11 @@ async function screenDetail(id) {
   const blob = await getBlob(`${id}/pano`);
   app.innerHTML = `
     <div class="page">
-      <header class="top"><button class="icon" id="back">‹</button><div class="title">${esc(t(c.meta.category))}</div><span></span></header>
+      <header class="top"><button class="icon" id="back">‹</button><div class="title">${t('photo360')}</div><span></span></header>
       <div class="viewer"><canvas id="pv"></canvas><span class="badge360">360°</span></div>
       <div class="info">
-        ${c.meta.place ? `<div><b>${esc(c.meta.place)}</b></div>` : ''}
         <div class="muted small">${fmtDate(c.createdAt)} · ${c.shots.length} ${t('shots')}</div>
         <div class="muted small">${c.location ? `📍 ${c.location.lat.toFixed(5)}, ${c.location.lon.toFixed(5)}` : t('noLocation')}</div>
-        ${c.meta.note ? `<p>${esc(c.meta.note)}</p>` : ''}
         <div class="status st-${c.status}" id="st">${statusText(c)}</div>
         ${c.status === 'review' ? `<p class="warn small">${t('save')} ?</p>` : ''}
       </div>
@@ -379,7 +376,7 @@ async function main() {
   if (qs.has('demo') && ['localhost', '127.0.0.1'].includes(location.hostname)) {
     setProfile({ name: 'Amina', team: 'Équipe Casbah' });
     if (qs.get('lang')) setLang(qs.get('lang'));
-    const scr = { '#new': screenNew, '#settings': screenSettings, '#capture': () => screenCapture({ category: 'heritage', place: 'Démo' }) }[location.hash];
+    const scr = { '#new': screenNew, '#settings': screenSettings, '#capture': () => screenCapture({}) }[location.hash];
     if (scr) return scr();
   }
   if (!profile()?.name) screenSetup(); else screenHome();

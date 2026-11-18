@@ -8,8 +8,6 @@ export const CONFIG = {
   panoWidth: 4096,
   // Envoyer aussi les photos sources (permet de refaire une version HD sur ordinateur).
   sendSourcesDefault: true,
-  // Types de relevé proposés aux participants
-  categories: ['waste_before', 'waste_after', 'heritage', 'other'],
 };
 
 // Pour les tests en local uniquement : localStorage.gq_dev_upload = '{"uploadUrl":"…","uploadKey":"…"}'

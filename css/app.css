@@ -88,20 +88,13 @@ h2 { font-size: 19px; }
 .hint { background: var(--bg2); border-radius: 12px; padding: 10px 12px; font-size: 14px; margin: 0; }
 .warn { color: var(--warn); margin: 0; }
 
-.cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cat { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center;
-  background: var(--bg2); border: 2px solid transparent; border-radius: 14px; padding: 14px 8px; min-height: 96px; cursor: pointer; font-size: 14px; font-weight: 600; }
-.cat input { position: absolute; opacity: 0; }
-.cat:has(input:checked) { border-color: var(--green); background: #1b4a33; }
-.cat-ic { width: 34px; height: 34px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 20px; }
-.cat-waste_before::after { content: "🗑️"; }
-.cat-waste_after::after { content: "✨"; }
-.cat-heritage::after { content: "🏛️"; }
-.cat-other::after { content: "📍"; }
-
-.tips { background: var(--bg2); border-radius: 14px; padding: 10px 14px; }
-.tips summary { font-weight: 700; cursor: pointer; }
-.tips ol { margin: 8px 0 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.tip-list { display: flex; flex-direction: column; gap: 10px; }
+.tip { display: flex; gap: 12px; align-items: flex-start; background: var(--bg2); border-radius: 14px; padding: 12px 14px; }
+.tip-ic { font-size: 24px; line-height: 1; width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--card); border-radius: 12px; }
+.tip-t { font-weight: 700; margin-bottom: 2px; }
+.tip-d { font-size: 14.5px; color: var(--muted); }
+.tip:first-child { border: 2px solid var(--green); }
+.btn.sticky { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); box-shadow: 0 6px 24px rgba(0,0,0,.45); }
 .howto-img { display: flex; justify-content: center; color: var(--muted); margin-top: 6px; }
 
 .viewer { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden; background: #000; }

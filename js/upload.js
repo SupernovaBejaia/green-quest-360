@@ -42,8 +42,8 @@ export function folderNameFor(c) {
   const d = new Date(c.createdAt);
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}`;
-  const clean = (s) => (s || '').normalize('NFKD').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 30);
-  return [stamp, clean(c.meta.participant) || 'anonyme', c.meta.category, clean(c.meta.place), c.id.slice(-4)].filter(Boolean).join('_');
+  const clean = (s) => (s || '').normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 30);
+  return [stamp, clean(c.meta.participant) || 'anonyme', clean(c.meta.team), c.id.slice(-4)].filter(Boolean).join('_');
 }
 
 function fileList(c, withSources) {
@@ -101,7 +101,7 @@ async function uploadOne(c, withSources) {
   if (!c.uploaded['__record']) {
     await call({ key: CONFIG.uploadKey, action: 'record', folder, record: {
       id: c.id, date: new Date(c.createdAt).toISOString(), participant: c.meta.participant, team: c.meta.team,
-      category: c.meta.category, place: c.meta.place, note: c.meta.note,
+      category: '', place: '', note: '',
       lat: c.location?.lat ?? '', lon: c.location?.lon ?? '', accuracy: c.location?.accuracy ?? '',
       panoUrl: c.remote?.panoUrl || '', shots: c.shots.length,
     } });
