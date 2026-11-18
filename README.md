@@ -1,7 +1,6 @@
 # Green Quest 360 (Supernova)
 
-Web app installable (Android + iPhone) pour prendre des **photos 360 hors ligne** pendant Green Quest
-(nettoyage des déchets en Algérie, cartographie des lieux historiques), puis les **envoyer dans Google Drive**.
+Web app installable (Android + iPhone) pour prendre des **photos 360 hors ligne** pendant Green Quest, puis les **envoyer dans Google Drive**. Un écran de conseils guide chaque participant pour réussir sa photo sphère.
 
 - **Prise de vue guidée** : points cibles à viser, déclenchement automatique quand le téléphone est immobile.
 - **Assemblage 360 sur le téléphone**, sans Internet. L'alignement se fait sur le contenu des images,

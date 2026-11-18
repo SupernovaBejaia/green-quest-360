@@ -63,9 +63,9 @@ Sans ça, les téléphones garderaient l'ancienne version en cache.
 
 ```
 Green Quest 360/
-  Relevés Green Quest 360        ← Google Sheet : date, participant, équipe, type, lieu, remarque, GPS, liens
+  Relevés Green Quest 360        ← Google Sheet : date, participant, équipe, GPS, liens
   2026-11-20/
-    2026-11-20_10h32_Amina_waste_before_Plage_ab12/
+    2026-11-20_10h32_Amina_Equipe-Casbah_ab12/
       …_360.jpg                  ← photo 360 (4096×2048), reconnue comme 360 par Google Photos, Facebook, Kuula…
       meta.json                  ← infos + orientation de chaque photo source
       sources/source_01.jpg …    ← photos sources (si l'option est activée)

@@ -9,7 +9,7 @@
 Ouvre l'app une première fois pendant que tu as Internet. Ensuite, elle marche **sans connexion**.
 
 ## Prendre une photo 360
-1. **Nouvelle photo 360**, choisis le type (déchets avant / après, lieu historique…) et le nom du lieu.
+1. Appuie sur **Nouvelle photo 360** et lis les 8 conseils.
 2. Autorise la **caméra**, le **mouvement** et la **position**.
 3. Tiens le téléphone **droit devant toi**.
 4. **Vise le point blanc** et ne bouge plus : la photo se prend toute seule (bip).
@@ -32,7 +32,7 @@ La photo part toute seule vers le Drive dès que tu as du réseau. Garde l'app o
 افتح التطبيق مرة أولى وأنت متصل بالإنترنت. بعد ذلك يعمل **بدون اتصال**.
 
 ## التقاط صورة 360
-1. **صورة 360 جديدة**، اختر النوع (نفايات قبل / بعد، موقع تاريخي…) واسم المكان.
+1. اضغط على **صورة 360 جديدة** واقرأ النصائح الثماني.
 2. اسمح بـ**الكاميرا** و**الحركة** و**الموقع**.
 3. أمسك الهاتف **مستقيمًا أمامك**.
 4. **صوّب نحو النقطة البيضاء** وابقَ ثابتًا: تُلتقط الصورة تلقائيًا.
