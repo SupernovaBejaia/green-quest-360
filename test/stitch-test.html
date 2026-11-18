@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test assemblage</title>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 16px; background: #111; color: #eee; }
+  canvas { max-width: 100%; display: block; margin: 8px 0; border: 1px solid #333; }
+  pre { background: #1b1b1b; padding: 8px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Test d'assemblage (décor synthétique)</h1>
+<pre id="log">Préparation…</pre>
+<h3>Original</h3><canvas id="orig"></canvas>
+<h3>Résultat</h3><canvas id="out"></canvas>
+<script type="module">
+import { DEG, mul, expMap, camLookingAt, transpose, forwardOf } from '../js/math.js';
+import { makeSyntheticPano, renderView } from '../js/sim.js';
+import { makeTargets, focalNormFromFov } from '../js/targets.js';
+
+const params = new URLSearchParams(location.search);
+const NOISE = parseFloat(params.get('noise') ?? '3') * DEG;   // erreur gyroscope simulée
+const FOCAL_ERR = parseFloat(params.get('ferr') ?? '0.08');   // erreur de focale simulée
+const REFINE = params.get('refine') !== '0';
+const log = (s) => { document.getElementById('log').textContent += '\n' + s; };
+
+const pano = makeSyntheticPano(4096);
+const oc = document.getElementById('orig'); oc.width = 2048; oc.height = 1024;
+const tmp = document.createElement('canvas'); tmp.width = pano.width; tmp.height = pano.height;
+tmp.getContext('2d').putImageData(pano, 0, 0);
+oc.getContext('2d').drawImage(tmp, 0, 0, 2048, 1024);
+
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
+const trueFovLong = 64 * DEG;
+const fn = focalNormFromFov(trueFovLong);
+const mw = 384, mh = 512, cw = 576, ch = 768;
+const targets = makeTargets();
+const images = [];
+let t0 = performance.now();
+for (const t of targets) {
+  // l'utilisateur ne vise jamais parfaitement : +-2° et un peu de roulis
+  const Rtrue = camLookingAt(t.yaw + rnd() * 2 * DEG, t.pitch + rnd() * 2 * DEG * (t.pole ? 0 : 1), rnd() * 3 * DEG);
+  const Rsensor = mul(expMap([rnd() * NOISE, rnd() * NOISE, rnd() * NOISE]), Rtrue);
+  const col = renderView(pano, Rtrue, cw, ch, fn * ch);
+  const g = renderView(pano, Rtrue, mw, mh, fn * mh);
+  const gray = new Uint8Array(mw * mh);
+  for (let i = 0; i < mw * mh; i++) gray[i] = 0.299 * g.data[4 * i] + 0.587 * g.data[4 * i + 1] + 0.114 * g.data[4 * i + 2];
+  // exposition variable selon la photo
+  const gain = 1 + rnd() * 0.12;
+  for (let i = 0; i < col.data.length; i += 4) { col.data[i] *= gain; col.data[i + 1] *= gain; col.data[i + 2] *= gain; }
+  for (let i = 0; i < gray.length; i++) gray[i] = Math.min(255, gray[i] * gain);
+  images.push({ mw, mh, gray, cw, ch, color: col.data, R: Rsensor, Rtrue });
+}
+log(`Vues générées : ${images.length} en ${Math.round(performance.now() - t0)} ms (bruit ${NOISE / DEG}°, erreur focale ${FOCAL_ERR * 100}%)`);
+
+const worker = new Worker('../js/stitch.worker.js', { type: 'module' });
+t0 = performance.now();
+worker.onmessage = (e) => {
+  const m = e.data;
+  if (m.type === 'progress') return;
+  if (m.type === 'error') { log('ERREUR ' + m.message); return; }
+  const dt = Math.round(performance.now() - t0);
+  // Erreur résiduelle d'orientation relative (par rapport à la photo 0, comme le fait l'assemblage)
+  const rel = (A, B) => mul(transpose(A), B);
+  let errs = [];
+  for (let i = 1; i < images.length; i++) {
+    const Rt = rel(images[0].Rtrue, images[i].Rtrue), Re = rel(m.rotations[0], m.rotations[i]);
+    const D = mul(transpose(Rt), Re);
+    errs.push(Math.acos(Math.max(-1, Math.min(1, (D[0] + D[4] + D[8] - 1) / 2))) / DEG);
+  }
+  const mean = errs.reduce((a, b) => a + b, 0) / errs.length, max = Math.max(...errs);
+  // Erreur absolue (inclut l'inclinaison de l'horizon)
+  let abs = 0;
+  for (let i = 0; i < images.length; i++) {
+    const D = mul(transpose(images[i].Rtrue), m.rotations[i]);
+    abs += Math.acos(Math.max(-1, Math.min(1, (D[0] + D[4] + D[8] - 1) / 2))) / DEG;
+  }
+  abs /= images.length;
+  log(`Erreur absolue moyenne (horizon compris) : ${abs.toFixed(2)}°`);
+  log(`Assemblage : ${dt} ms`);
+  log(`Stats : ${JSON.stringify(m.stats)}`);
+  log(`Focale : vraie ${fn.toFixed(4)}  estimée ${m.focalNorm.toFixed(4)}  (départ ${(fn * (1 + FOCAL_ERR)).toFixed(4)})`);
+  log(`Erreur d'orientation relative après assemblage : moyenne ${mean.toFixed(2)}°, max ${max.toFixed(2)}°`);
+  window.__result = { mean, max, abs, stats: m.stats, focal: m.focalNorm, trueFocal: fn, ms: dt };
+  const out = document.getElementById('out'); out.width = m.w; out.height = m.h;
+  out.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(m.rgba), m.w, m.h), 0, 0);
+  out.style.width = '2048px';
+};
+worker.postMessage({ cmd: 'stitch', images: images.map(({ Rtrue, ...im }) => im), focalNorm: fn * (1 + FOCAL_ERR), outW: 4096, refine: REFINE });
+</script>
+</body>
+</html>
