@@ -1,6 +1,6 @@
 // Service worker : met l'application en cache pour qu'elle s'ouvre et fonctionne sans Internet.
 // Changer VERSION à chaque mise en ligne pour que les téléphones récupèrent la nouvelle version.
-const VERSION = 'gq360-v1';
+const VERSION = 'gq360-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/capture.js', 'js/config.js', 'js/db.js', 'js/i18n.js', 'js/jpeg-meta.js',
