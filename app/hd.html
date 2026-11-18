@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier HD 360</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .page { max-width: 900px; }
+  .drop { border: 2px dashed #3c6b52; border-radius: 16px; padding: 28px 16px; text-align: center; cursor: pointer; }
+  .drop.over { border-color: var(--green); background: var(--bg2); }
+  .out { width: 100%; border-radius: 12px; display: block; }
+  select { background: var(--bg2); color: var(--text); border: 1.5px solid #2f5c44; border-radius: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top"><div class="title">Atelier HD — Green Quest 360</div></header>
+  <p class="muted">Refait une photo 360 en haute définition sur ordinateur, à partir d'un dossier reçu sur Drive
+    (le fichier <code>meta.json</code> et le dossier <code>sources</code>). Tout reste sur cet ordinateur.</p>
+  <label class="drop" id="drop">
+    <input type="file" id="files" multiple webkitdirectory hidden>
+    <b>Choisissez le dossier de la photo</b><br><span class="muted small">ou glissez-y meta.json + les photos sources</span>
+  </label>
+  <div class="row gap wrap">
+    <label class="row">Largeur&nbsp;
+      <select id="width"><option>6144</option><option selected>8192</option><option>10240</option></select>
+    </label>
+    <button class="btn primary" id="go" disabled>Assembler en HD</button>
+  </div>
+  <div class="bar"><div class="bar-fill" id="fill" style="width:0"></div></div>
+  <p class="muted" id="msg"></p>
+  <img class="out" id="out" alt="">
+  <a class="btn ghost hidden" id="dl" download>Télécharger la photo 360 HD</a>
+</div>
+<script type="module">
+import { stitchShots, encodePano } from './js/pipeline.js';
+const $ = (id) => document.getElementById(id);
+let meta = null, files = new Map();
+
+async function take(list) {
+  for (const f of list) {
+    if (f.name === 'meta.json') meta = JSON.parse(await f.text());
+    else if (/\.jpe?g$/i.test(f.name) && !/_360\.jpe?g$/i.test(f.name)) files.set(f.name, f);
+  }
+  const n = meta ? meta.shots.filter((s) => files.has(s.file.split('/').pop())).length : 0;
+  $('msg').textContent = meta ? `${n} photos sources sur ${meta.shots.length} trouvées.` : 'meta.json introuvable dans la sélection.';
+  $('go').disabled = !meta || n < 4;
+}
+$('files').onchange = (e) => take(e.target.files);
+const drop = $('drop');
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove('over'); take(e.dataTransfer.files); };
+
+$('go').onclick = async () => {
+  $('go').disabled = true;
+  const shots = meta.shots.map((s) => ({ R: s.R, blob: files.get(s.file.split('/').pop()) })).filter((s) => s.blob);
+  const W = Number($('width').value);
+  const labels = { prepare: 'Lecture des photos', features: 'Analyse', match: 'Alignement', optimize: 'Calcul des positions', render: 'Rendu HD' };
+  const weights = { prepare: [0, 0.15], features: [0.15, 0.2], match: [0.2, 0.5], optimize: [0.5, 0.55], render: [0.55, 0.98] };
+  const t0 = performance.now();
+  try {
+    const res = await stitchShots(shots, {
+      focalNorm: meta.focalNorm, outW: W, maxRenderLong: 4032,
+      onProgress: (st, f) => { const [a, b] = weights[st] || [0, 1]; $('fill').style.width = `${(a + (b - a) * f) * 100}%`; $('msg').textContent = labels[st] || st; },
+    });
+    const { pano } = await encodePano(res, meta.location, 0.92);
+    const url = URL.createObjectURL(pano);
+    $('out').src = url;
+    const dl = $('dl'); dl.href = url; dl.download = `${meta.id}_360_HD.jpg`; dl.classList.remove('hidden');
+    $('fill').style.width = '100%';
+    $('msg').textContent = `Terminé en ${Math.round((performance.now() - t0) / 1000)} s — ${res.w}×${res.h}, ${res.stats.matches} points d'alignement, erreur ${res.stats.rms?.toFixed(2)} px.`;
+  } catch (e) {
+    $('msg').textContent = 'Erreur : ' + e.message;
+  }
+  $('go').disabled = false;
+};
+</script>
+</body>
+</html>

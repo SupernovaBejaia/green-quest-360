@@ -1,0 +1,25 @@
+# Green Quest 360 (Supernova)
+
+Web app installable (Android + iPhone) pour prendre des **photos 360 hors ligne** pendant Green Quest
+(nettoyage des déchets en Algérie, cartographie des lieux historiques), puis les **envoyer dans Google Drive**.
+
+- **Prise de vue guidée** : points cibles à viser, déclenchement automatique quand le téléphone est immobile.
+- **Assemblage 360 sur le téléphone**, sans Internet. L'alignement se fait sur le contenu des images,
+  ce qui corrige le gyroscope ; l'exposition est égalisée ; la photo fait 4096×2048.
+- **Métadonnées** : photo reconnue comme 360 (XMP GPano) avec la position GPS (EXIF).
+- **File d'envoi** vers Drive via Google Apps Script : reprise automatique et aucun doublon.
+  Un Google Sheet est rempli pour la carte.
+- **Interface** en français et en arabe.
+- **Atelier HD** (`hd.html`) : refait une version 8192 px sur ordinateur à partir des photos sources.
+
+| Dossier | Contenu |
+|---|---|
+| `app/` | l'application à héberger (fichiers statiques, HTTPS) |
+| `apps-script/Code.gs` | le script Google qui reçoit les photos |
+| `docs/INSTALLATION.md` | mise en place (organisateur) |
+| `docs/GUIDE-PARTICIPANTS.md` | guide FR / AR à partager |
+| `tools/serve.mjs` | serveur de test local (`node tools/serve.mjs`) |
+
+**Tests en local** : `node tools/serve.mjs`, puis
+- <http://localhost:5360/?sim> : simulation sur PC, on fait tourner la vue à la souris ;
+- <http://localhost:5360/test/stitch-test.html> : test de précision de l'assemblage.

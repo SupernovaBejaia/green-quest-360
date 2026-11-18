@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app360",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve.mjs", "5360"],
+      "port": 5360
+    }
+  ]
+}

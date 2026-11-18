@@ -1,0 +1,17 @@
+{
+  "name": "Green Quest 360",
+  "short_name": "GQ 360",
+  "description": "Photos 360 hors ligne pour Green Quest : nettoyage et patrimoine.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f2a1d",
+  "theme_color": "#0f2a1d",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
